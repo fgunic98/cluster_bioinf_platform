@@ -1,91 +1,59 @@
-global:
-  namespace: platform
-  storageClass: standard
-  imagePullPolicy: IfNotPresent
+# ---------------------------------------------------------------------------
+# Postgres
+# ---------------------------------------------------------------------------
+# Toggle: when true, the Bitnami postgresql subchart is installed and the
+# custom Postgres templates in this chart are skipped.
+# When false (default), the custom Postgres StatefulSet is installed and the
+# Bitnami subchart is not pulled in (controlled by the dependency `condition`
+# in Chart.yaml — both must agree).
+postgres:
+  bitnami:
+    enabled: false
 
-platform-api:
-  replicaCount: 1
+  # ---- Settings used when bitnami.enabled is false (custom Postgres) ----
+  image:
+    repository: postgres
+    tag: "16"               # pin major version; never `latest` for stateful workloads
+    pullPolicy: IfNotPresent
+
+  auth:
+    database: platformDB
+    # username and password are NOT set here.
+    # Provide them via values-secrets.yaml at install time.
+    # See values-secrets.example.yaml for the expected shape.
+
+  storage:
+    size: 4Gi
+    # storageClassName: ""  # uncomment to override; empty string = cluster default
+
+  service:
+    port: 5432
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# ---------------------------------------------------------------------------
+# Platform API (Spring Boot)
+# ---------------------------------------------------------------------------
+api:
   image:
     repository: platform-api
-    tag: latest
+    tag: local
     pullPolicy: IfNotPresent
+
+  replicaCount: 1
 
   service:
     type: ClusterIP
     port: 8080
 
-  env:
-    SPRING_DATASOURCE_URL: jdbc:postgresql://platform-postgresql:5432/platformDB
-    SPRING_DATASOURCE_USERNAME: admin
-    SPRING_DATASOURCE_PASSWORD: admin
-
-postgresql:
-  auth:
-    postgresPassword: postgres
-    username: admin
-    password: admin
-    database: platformDB
-
-  primary:
-    persistence:
-      enabled: true
-      size: 4Gi
-
-  metrics:
-    enabled: true
-
-  postgresqlSharedPreloadLibraries: "pg_stat_statements"
-
-kube-prometheus-stack:
-  grafana:
-    enabled: true
-    adminPassword: admin
-    service:
-      type: ClusterIP
-
-  prometheus:
-    prometheusSpec:
-      serviceMonitorSelectorNilUsesHelmValues: false
-
-loki:
-  loki:
-    auth_enabled: false
-
-  deploymentMode: SingleBinary
-
-  singleBinary:
-    replicas: 1
-
-  backend:
-    replicas: 0
-  read:
-    replicas: 0
-  write:
-    replicas: 0
-
-  test:
-    enabled: false
-
-alloy:
-  alloy:
-    configMap:
-      create: true
-      content: |
-        logging {
-          level = "info"
-        }
-
-        discovery.kubernetes "pods" {
-          role = "pod"
-        }
-
-        loki.source.kubernetes "pods" {
-          targets    = discovery.kubernetes.pods.targets
-          forward_to = [loki.write.default.receiver]
-        }
-
-        loki.write "default" {
-          endpoint {
-            url = "http://platform-loki-gateway/loki/api/v1/push"
-          }
-        }
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
