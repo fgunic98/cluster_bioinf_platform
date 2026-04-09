@@ -1,0 +1,1 @@
+<encoder class="net.logstash.logback.encoder.LogstashEncoder"/>

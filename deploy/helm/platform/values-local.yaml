@@ -1,0 +1,18 @@
+platform-api:
+  replicaCount: 1
+  image:
+    tag: local
+
+postgresql:
+  primary:
+    persistence:
+      size: 2Gi
+
+kube-prometheus-stack:
+  grafana:
+    service:
+      type: NodePort
+
+loki:
+  singleBinary:
+    replicas: 1

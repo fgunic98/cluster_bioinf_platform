@@ -1,0 +1,91 @@
+global:
+  namespace: platform
+  storageClass: standard
+  imagePullPolicy: IfNotPresent
+
+platform-api:
+  replicaCount: 1
+  image:
+    repository: platform-api
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  env:
+    SPRING_DATASOURCE_URL: jdbc:postgresql://platform-postgresql:5432/platformDB
+    SPRING_DATASOURCE_USERNAME: admin
+    SPRING_DATASOURCE_PASSWORD: admin
+
+postgresql:
+  auth:
+    postgresPassword: postgres
+    username: admin
+    password: admin
+    database: platformDB
+
+  primary:
+    persistence:
+      enabled: true
+      size: 4Gi
+
+  metrics:
+    enabled: true
+
+  postgresqlSharedPreloadLibraries: "pg_stat_statements"
+
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    adminPassword: admin
+    service:
+      type: ClusterIP
+
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+
+loki:
+  loki:
+    auth_enabled: false
+
+  deploymentMode: SingleBinary
+
+  singleBinary:
+    replicas: 1
+
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+
+  test:
+    enabled: false
+
+alloy:
+  alloy:
+    configMap:
+      create: true
+      content: |
+        logging {
+          level = "info"
+        }
+
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+        loki.source.kubernetes "pods" {
+          targets    = discovery.kubernetes.pods.targets
+          forward_to = [loki.write.default.receiver]
+        }
+
+        loki.write "default" {
+          endpoint {
+            url = "http://platform-loki-gateway/loki/api/v1/push"
+          }
+        }

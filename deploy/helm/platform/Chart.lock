@@ -1,0 +1,18 @@
+dependencies:
+- name: platform-api
+  repository: file://../../charts/platform-api
+  version: 0.1.0
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 16.2.1
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 82.16.1
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 6.0.0
+- name: alloy
+  repository: https://grafana.github.io/helm-charts
+  version: 1.0.3
+digest: sha256:72a27a53f84e7c5e36645cd17fd0de8f2a5d732b96be4ec66590e41d8787e117
+generated: "2026-04-02T18:30:42.888228433+02:00"
